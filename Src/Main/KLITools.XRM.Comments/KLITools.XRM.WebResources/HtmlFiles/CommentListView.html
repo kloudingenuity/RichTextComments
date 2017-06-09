@@ -1,0 +1,705 @@
+﻿<!--<!DOCTYPE html>-->
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Comment View</title>
+    <script type="text/javascript" src="../../ClientGlobalContext.js.aspx"></script>
+    <script src="../Scripts/Libraries/jquery_3.1.0.min.js" type="text/javascript"></script>
+
+    <link type="text/css" rel="stylesheet" href="../Style/Libraries/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="../Style/Libraries/jsgrid.theme.min.css" />
+    
+    <!--<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />-->
+    <link type="text/css" rel="stylesheet" href="../Style/Libraries/font.awesome.min.css" />
+
+    <link rel="stylesheet" href="../../../../_common/styles/fonts.css.aspx?lcid=1033&ver=-1080561990" />
+
+    <script src="../Scripts/Libraries/jsgrid.min.js" type="text/javascript"></script>
+    <script src="../Scripts/Libraries/XrmServiceToolkit.min.js" type="text/javascript"></script>
+    <script src="../Scripts/KLI.Comment.ServerOperations.js" type="text/javascript"></script>
+    <script src="../Scripts/KLI.Comment.CommentUtility.js" type="text/javascript"></script>
+
+    <script>
+        //var _ExpandPNGUrl = Mscrm.CrmUri.create("/WebResources/sandisk_/Images/Expand16.png");
+        var _ExpandPNGUrl = "../Images/Expand16.png";
+        //var _CollapsePNGUrl = Mscrm.CrmUri.create("/WebResources/sandisk_/Images/Collapse16.png");
+        var _CollapsePNGUrl = "../Images/Collapse16.png";
+
+        var _serverUrl = Xrm.Page.context.getClientUrl();
+        var _entityId = '';
+        var _entityName = '';
+        var _entityTypeCode = '';
+        var _regardingAttributeName = '';
+        var _entityStatus = 0;
+        var _docTitle = 'Comments';
+        var _gridHeight = 400;
+
+        String.prototype.capitalize = function () {
+            return this.charAt(0).toUpperCase() + this.slice(1);
+        };
+
+        function ToggleCommentsBody(e) {
+            var id = e.data['data-original-title']; //e.data[0].data[0].CommentId;//e.data('original-title');
+            if ($("#lblcommentbody" + id).css('display') == 'none') {
+                $("#lblcommentbody" + id).show();
+                $("#Commmentheadericon" + id).removeClass("fa fa-plus-square-o");
+                $("#Commmentheadericon" + id).addClass("fa fa-minus-square-o");
+            }
+            else {
+                $("#lblcommentbody" + id).hide();
+                $("#Commmentheadericon" + id).removeClass("fa fa-minus-square-o");
+                $("#Commmentheadericon" + id).addClass("fa fa-plus-square-o");
+            }
+            IsCollapseAll();
+            return false;
+        }
+
+        function IsCollapseAll() {
+            var isCollapseAll = true;
+            $("i[id^=Commmentheadericon]").each(function () {
+                if ($(this)[0].className != "fa fa-plus-square-o") {
+                    isCollapseAll = false;
+                }
+            });
+
+            if (isCollapseAll)
+                $("#spnCollapseAll").text("EXPAND ALL");
+            else
+                $("#spnCollapseAll").text("COLLAPSE ALL");
+        }
+
+        function CollapseAll() {
+            if ($("#spnCollapseAll").text().trim() == "COLLAPSE ALL") {
+                $("i[id^=Commmentheadericon]").each(function () {
+                    if ($(this)[0].className == "fa fa-minus-square-o") {
+                        $(this).removeClass("fa fa-minus-square-o");
+                        $(this).addClass("fa fa-plus-square-o");
+                        $("#lblcommentbody" + $(this).data('original-title')).hide();
+                    }
+                });
+                $("#spnCollapseAll").text("EXPAND ALL");
+                $("#imgCollapseAll").attr("src", _ExpandPNGUrl);
+            }
+            else {
+                $("i[id^=Commmentheadericon]").each(function () {
+                    if ($(this)[0].className == "fa fa-plus-square-o") {
+                        $(this).removeClass("fa fa-plus-square-o");
+                        $(this).addClass("fa fa-minus-square-o");
+                        $("#lblcommentbody" + $(this).data('original-title')).show();
+                    }
+                });
+                $("#spnCollapseAll").text("COLLAPSE ALL");
+                $("#imgCollapseAll").attr("src", _CollapsePNGUrl);
+            }
+        }
+
+        $(document).ready(function () {
+            debugger;
+            _gridHeight = window.innerHeight - 12;
+            var qStringCollection = pareseQueryString(window.location.search);
+
+            if (qStringCollection.length > 0) {
+                _entityId = (($.grep(qStringCollection, function (n, i) { return (n.ParamName == "id") })))[0].ParamValue;
+                _entityName = (($.grep(qStringCollection, function (n, i) { return (n.ParamName == "typename") })))[0].ParamValue;
+                _entityTypeCode = (($.grep(qStringCollection, function (n, i) { return (n.ParamName == "type") })))[0].ParamValue; // Entity Type Code
+                _regardingAttributeName = (($.grep(qStringCollection, function (n, i) { return (n.ParamName == "regardingattributename") })))[0].ParamValue;
+                _entityStatus = (($.grep(qStringCollection, function (n, i) { return (n.ParamName == "status") })))[0].ParamValue;
+            }
+
+            setSupportedCommentTypes();
+
+            RetrieveComments();
+
+            //var clients = [
+            //    { "CommentId": "1", "CreatedByName": "otto Clay","ModifiedByName": "otto clay", "IsModified": true, "ModifiedById": 25, "LastModifiedOn": "02/25/2016 05:12 AM", "CreatedById": 25, "CreatedOn": "02/25/2016 05:12 AM", "Comment": "Ap #897-1459 Quam Avenue", "Married": false },
+            //    { "CommentId": "2", "CreatedByName": "Connor Johnston", "CreatedById": 45, "CreatedOn": 2, "Comment": "Ap #370-4647 Dis Av.", "Married": true },
+            //    { "CommentId": "3", "CreatedByName": "Lacey Hess", "CreatedById": 29, "CreatedOn": 3, "Comment": "Ap #365-8835 Integer St.", "Married": false },
+            //    { "CommentId": "4", "CreatedByName": "Timothy Henson", "CreatedById": 56, "CreatedOn": 1, "Comment": "911-5143 Luctus Ave", "Married": true },
+            //    { "CommentId": "5", "CreatedByName": "Ramona Benton", "CreatedById": 32, "CreatedOn": 3, "Comment": "Ap #614-689 Vehicula Street", "Married": false }
+            //];
+
+            //var countries = [
+            //    { Name: "", Id: 0 },
+            //    { Name: "United States", Id: 1 },
+            //    { Name: "Canada", Id: 2 },
+            //    { Name: "United Kingdom", Id: 3 }
+            //];
+
+        });
+
+        function NewComments() {
+            KLI.Comment.CommentUtility._openNewRecord(_entityId, _entityName, _entityTypeCode, _regardingAttributeName);
+            //var queryStringData = encodeURIComponent(_regardingAttributeName + "=" + _entityId + "&kli_regardingobjecttype=" + _entityTypeCode);
+            //var _webresourceUrl = Xrm.Page.context.getClientUrl() + "/main.aspx?dType=1&etn=kli_comment&DialogName=AddComment&pagetype=entityrecord&extraqs=" + queryStringData;
+
+            //var dialogOption = new Xrm.DialogOptions;
+            //dialogOption.width = 700;
+            //dialogOption.height = 465;
+            ////parent.Xrm.Internal.openDialog(_webresourceUrl,
+            ////            dialogOption,
+            ////            null,
+            ////            null,
+            ////            null);
+            //var windowOptions = {
+            //    openInNewWindow: true
+            //};
+            //Xrm.Utility.openEntityForm("kli_comment", null, null, windowOptions);
+        }
+
+        function RetrieveComments() {
+            var results = KLI.Comment.ServerOperations._retriveAllComments(_entityId, _entityName, _regardingAttributeName);
+
+            if (results.length >= 0) {
+                BindGrid(results);
+                //$('.k-grid .k-grid-header').hide();
+                //CommentTypeFilterOnChange();
+            }
+        }
+
+        function BindGrid(dsComments) {
+
+            $("#commentsGrid").jsGrid({
+                width: "100%",
+                height: _gridHeight + "px",
+
+				autoload: true,
+                inserting: false,
+                editing: false,
+                sorting: true,
+                paging: true,
+                heading: false,
+
+                loadIndication: true,
+                loadIndicationDelay: 500,
+                loadMessage: "Loading...",
+                loadShading: true,
+
+
+                noDataContent: "No Comment records are available in this view.",
+                data: dsComments,
+
+                fields: [
+                    //{ name: "CreatedByName", type: "text", width: 150, validate: "required" },
+                    //{ name: "CreatedById", type: "number", width: 50 },
+                    //{ name: "Comment", type: "textarea", width: 200 },
+                    //{ name: "CommentTypeName", type: "text", width: 200 },
+                    //{ name: "CreatedOn", type: "text", width: 200 },
+                    //{ name: "Country", type: "select", items: countries, valueField: "Id", textField: "Name" },
+                    //{ name: "Married", type: "checkbox", title: "Is Married", sorting: false },
+                    //{ type: "control" }
+                ],
+
+				controller: {
+					loadData: function (filter) {
+						$.extend(filter, {
+								commentType: $("#ddlCommentType").val()
+							});
+
+						return $.grep(dsComments, function(comment) {
+							return (filter.commentType == 0 || comment.CommentType == filter.commentType);
+						});
+					}
+				},
+
+                rowRenderer: function (item, itemIndex) {
+                    var $panel = $("<div>").addClass("panel-default panel-comment-template offset-50");
+                    var $panelHeading = $("<div>").addClass("panel-heading").attr("id", item.CommentId).attr("style", "cursor:pointer");
+                    var $panelBody = $("<div>").addClass("panel-body").attr("id", "lblcommentbody" + item.CommentId).attr("style", "text-align:left;display:" + (itemIndex > 0 ? "none;" : "block;"));
+                    $panelBody.append(item.Comment);//$("<p>").attr("style", "text-wrap:normal").text(item.Comment));
+
+                    var $ulHeading = $("<ul>").addClass("comment-heading").attr("style", "text-align:left");
+
+                    var $liSeparator = "<li class='separator'><span>|</span></li>";//$("<li>").addClass("separator").append($("<span>").text(" $ "));
+
+                    var $liCreatedBy = $("<li>").addClass("comment-heading-user");
+
+                    if (itemIndex == 0)
+                        $liCreatedBy.append($("<i>").attr("id", "Commmentheadericon" + item.CommentId).attr("data-original-title", item.CommentId).addClass("fa fa-minus-square-o").on("click", { "data-original-title": item.CommentId }, ToggleCommentsBody));
+                    else
+                        $liCreatedBy.append($("<i>").attr("id", "Commmentheadericon" + item.CommentId).attr("data-original-title", item.CommentId).addClass("fa fa-plus-square-o").on("click", { "data-original-title": item.CommentId }, ToggleCommentsBody));
+
+                    if (item.CreatedById == null || item.CreatedById == "00000000-0000-0000-0000-000000000000")
+                        $liCreatedBy.append($("<b>").attr("style", "color:black;").text(item.CreatedByName)).append(" " + item.CreatedOn);
+                    else
+                        $liCreatedBy.append($("<a>").attr("id", "#: CreatedById#").attr("type", "#: CreatedByType#")/*.click(SanDisk.CaseComment.CaseCommentUtility._showUser(this))*/.append($("<b>").attr("style", "color:black;").text(" " + item.CreatedByName.capitalize()))).append(" " + item.CreatedOn);
+
+                    var $liModifiedBy = $("<li>").addClass("comment-heading-user").attr("style", "display:" + item.IsModified);
+
+                    if (item.ModifiedById == null || item.ModifiedById == "00000000-0000-0000-0000-000000000000")
+                        $liModifiedBy.append($("<b>").attr("style", "color:black;").text(item.ModifiedByName)).append(" " + item.LastModifiedOn);
+                    else
+                        $liModifiedBy.append($("<a>").attr("id", "#: ModifiedById#").attr("type", "#: ModifiedByType#")/*.click(SanDisk.CaseComment.CaseCommentUtility._showUser(this))*/.append($("<b>").attr("style", "color:black;").text(" " + item.ModifiedByName.capitalize()))).append(" " + item.LastModifiedOn);
+
+                    //$liCreatedBy.append($liSeparator);
+                    //$liModifiedBy.append($liSeparator);
+
+                    var $liCommentType = $("<li>").addClass("comment-heading-user").append($("<b>").attr("style", "color:black;").text(item.CommentTypeName));
+
+                    var $liEditButton = "";
+
+                    if (item.ParentState == 1 || item.ParentState == 2)
+                        $liEditButton = $("<li>").addClass("comment-heading-user").append($("<a>").attr("id", item.CommentId).addClass("edit").text("Edit"));
+                    else
+                        $liEditButton = $("<li>").addClass("comment-heading-user").append($("<a>").on("click", { "Id": item.CommentId }, KLI.Comment.CommentUtility._openExistingRecord).attr("id", item.CommentId).addClass("edit").text("Edit"));
+
+                    if (item.IsModified == "none")
+                        $panelHeading.append($ulHeading.append($liCreatedBy).append($liSeparator).append($liCommentType).append($liSeparator).append($liEditButton));
+                    else
+                        $panelHeading.append($ulHeading.append($liCreatedBy).append($liSeparator).append($liModifiedBy).append($liSeparator).append($liCommentType).append($liSeparator).append($liEditButton));
+
+                    $panel.append($panelHeading).append($panelBody);
+
+                    return $("<tr>").append($("<td>").append($panel));
+                }
+
+                //headerRowRenderer: function (item) {
+                //    alert();
+                //},
+
+            });
+        }
+
+		function CommentTypeFilterOnChange() {
+			$("#commentsGrid").jsGrid("loadData");
+		}
+
+        function Sort() {
+            RetrieveComments();
+			//var order = $("input[name='orderby_method']:checked").length === 0 ? "desc" : ($("input[name='orderby_method']:checked").val() === "true" ? "desc": "asc");
+
+			//$("#commentsGrid").jsGrid("sort", { field: "CreatedOn", order: order });
+        }
+
+        function setSupportedCommentTypes() {
+            var unSupportedCommentTypes = KLI.Comment.ServerOperations._retrieveUnSupportedCommentTypes(_entityTypeCode);
+
+            if (unSupportedCommentTypes != null && unSupportedCommentTypes.length > 0)
+                $("#ddlCommentType option").each(function (index, option) {
+                    if ($.inArray(parseInt(option.value), unSupportedCommentTypes) !== -1) {
+                        $("#ddlCommentType option[value='" + parseInt(option.value) + "']").remove();
+                        return false;
+                    }
+                });
+        }
+
+        function pareseQueryString(data) {
+            var queryStringData = decodeURIComponent(data.split("?")[1]).replace("&data=", "&");
+
+            var queryStringArray = queryStringData.split('&');
+
+            var qStringCollection = [];
+            for (var count = 0; count < queryStringArray.length; count++) {
+                var paramsArray = queryStringArray[count].split('=');
+
+                if (paramsArray.length > 0) {
+                    var qString = {};
+                    qString.ParamName = paramsArray[0].toLowerCase();
+                    qString.ParamValue = paramsArray[1];
+
+                    qStringCollection.push(qString);
+                }
+            }
+
+            return qStringCollection;
+        }
+    </script>
+
+    <style type="text/css">
+        .row-alt {
+            background-color: #f5f5f5;
+        }
+
+        .row {
+            background-color: #ffffff;
+        }
+    </style>
+    
+    <style type="text/css">
+        body {
+            direction: ltr;
+            margin: 0px;
+            border: 0px;
+            cursor: default;
+        }
+
+        li.ms-crm-CommandBarItem {
+            /*font-size: 12px;*/
+            text-transform: uppercase;
+        }
+
+        li.ms-crm-CommandBarItem {
+            height: 28px;
+            margin-top: 6px;
+            margin-left: 5px;
+            margin-right: 5px;
+            vertical-align: top;
+            max-width: 200px;
+        }
+
+        div.ms-crm-TopBarContainerGlobal {
+            background-color: #FFFFFF;
+            background-image: url(/_imgs/theme/Outlook15White/Masthead.png?ver=-313276922);
+        }
+
+        div.ms-crm-TopBarContainer ul.ms-crm-CommandBar-Menu li.ms-crm-CommandBarItem, #contextualActionBar {
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+        span.ms-crm-CommandBar-Menu {
+            vertical-align: top;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+        }
+
+        span.ms-crm-Lookup-Item span.ms-crm-LookupItem-Name, span.ms-crm-CommandBar-Menu {
+            color: #444444;
+        }
+
+        span.ms-crm-Menu-Label {
+            padding-left: 2px;
+            padding-right: 2px;
+            padding-top: 2px;
+            padding-bottom: 1px;
+            height: 22px;
+            overflow-y: hidden;
+            cursor: default;
+            color: #ffffff;
+            display: inline-block;
+        }
+
+        span.ms-crm-CommandBar-Button {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 22px;
+            padding-top: 5px;
+            padding-bottom: 1px;
+            padding-right: 6px;
+        }
+
+        a.ms-crm-Menu-Label, a.ms-crm-Menu-Label-Flyout {
+            outline-width: 0px;
+            outline-style: none;
+            outline-color: invert;
+            padding-top: 8px;
+            padding-bottom: 4px;
+        }
+
+        .ms-crm-ImageStrip-NewRecord_16 {
+            background: transparent url(/_imgs/imagestrips/ribbonhomepage.png?ver=-313276922) no-repeat scroll -469px -541px;
+            width: 16px;
+            height: 16px;
+            overflow: hidden;
+        }
+
+        img.ms-crm-commandbar-image16by16 {
+            margin-left: 3px;
+        }
+
+
+
+
+        div.ms-crm-TopBarContainer ul.ms-crm-CommandBar-Menu {
+            margin-left: 15px;
+        }
+
+        .ms-crm-CommandBar-Button:hover {
+            background-color: #D7EBF9;
+            border-color: #D7EBF9;
+        }
+
+        div.ms-crm-Menu-Label {
+            padding-left: 2px;
+            padding-right: 2px;
+            padding-top: 3px;
+            height: 22px;
+            overflow-y: hidden;
+            cursor: default;
+            /*color: #ffffff;*/
+            display: inline-block;
+        }
+
+        div.ms-crm-CommandBar-Button {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 22px;
+            padding-top: 5px;
+            padding-bottom: 1px;
+            padding-right: 6px;
+        }
+
+        .ms-crm-List-MessageText {
+            color: #666666;
+            background-color: #FFFFFF;
+            top: 49%;
+            width: 100%;
+            height: 99%;
+            table-layout: fixed;
+            padding: 1;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            color: #999999;
+            font-size: 11px;
+            font-family: Segoe UI,Tahoma,Arial;
+        }
+
+        ul.ms-crm-CommandBar-Menu {
+            margin: 0px;
+            padding: 0px;
+            margin-bottom: 0in;
+            list-style: none;
+        }
+
+        /*.k-grid {
+            font-weight:600;
+            color:#000000;
+            font-size:12px;
+            font-family:Segoe UI, Arial, sans-serif;
+        }*/
+        .k-grid table {
+            width: 98%;
+        }
+
+        .k-grid td {
+            padding-top: 0em;
+            padding-bottom: 0em;
+            padding-right: 0.5em;
+        }
+
+        .panel-body {
+            border: 1px solid #e3e3e3;
+            border-radius: 5px;
+            border-top-left-radius: 0px;
+            border-top-right-radius: 0px;
+            -ms-border-radius: 5px;
+            -ms-border-top-left-radius: 0px;
+            -ms-border-top-right-radius: 0px;
+            -webkit-border-radius: 5px;
+            -webkit-border-top-left-radius: 0px;
+            -webkit-border-top-right-radius: 0px;
+            border-top: none;
+            padding-left: 3px;
+            padding-right: 3px;
+            /*font-weight:600;*/
+            color: #000000;
+            font-size: 12px;
+            font-family: Segoe UI, Arial, sans-serif;
+        }
+
+        .pageCases .panel-body {
+            padding: 0 !important;
+        }
+
+        .panel-comment-template {
+            margin: 10px 0 10px /*10% !important*/;
+        }
+
+        .panel-comment-template {
+            margin-left: 0% !important;
+        }
+
+            .panel-comment-template .panel-body p {
+                /*font-weight: 300;*/
+                line-height: 18px;
+                color: #484848;
+                /*font-size: 16px;*/
+            }
+
+            .panel-comment-template .panel-heading {
+                border: 1px solid #e3e3e3;
+                /* border-radius: 5px; */
+                border-top-left-radius: 0px;
+                border-top-right-radius: 0px;
+                -ms-border-radius: 5px;
+                -ms-border-top-left-radius: 0px;
+                -ms-border-top-right-radius: 0px;
+                /* -webkit-border-radius: 5px; */
+                -webkit-border-top-left-radius: 5px;
+                -webkit-border-top-right-radius: 5px;
+            }
+
+        .panel-heading {
+            padding-left: 3px;
+            padding-right: 3px;
+        }
+
+        .comment-heading {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            margin-right: 0px;
+        }
+
+            .comment-heading li {
+                display: inline-block;
+            }
+
+        .comment-heading-user {
+            font-size: 13px;
+            color: #666666;
+        }
+
+        .comment-heading li:last-of-type {
+            margin-left: 5px;
+        }
+
+        li.comment-heading-user::after {
+            content: " ";
+        }
+
+        li.comment-heading-timestamp {
+            /*font-size: 12px;*/
+            color: #888888;
+        }
+
+            li.comment-heading-timestamp::before {
+                content: "  commented on ";
+            }
+
+        /*.col-sm-12 {
+            position: relative;
+            min-height: 1px;
+            padding-right: 15px;
+            padding-left: 15px;
+        }*/
+
+        /*.col-sm-12 {
+            float: left;
+        }
+
+        .col-sm-12 {
+            width: 100%;
+        }*/
+
+        .panel-default {
+            border-color: #ddd;
+        }
+
+            .panel-default > .panel-heading {
+                color: #333;
+                background-color: #f5f5f5;
+                border-color: #ddd;
+            }
+
+                .panel-default > .panel-heading + .panel-collapse > .panel-body {
+                    border-top-color: #ddd;
+                }
+
+                .panel-default > .panel-heading .badge {
+                    color: #f5f5f5;
+                    background-color: #333;
+                }
+
+            .panel-default > .panel-footer + .panel-collapse > .panel-body {
+                border-bottom-color: #ddd;
+            }
+
+        .offset-50 {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+
+        @media all and (max-width:767px) {
+            header .offset-50 {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .offset-50 {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+
+        li.separator {
+            padding-left: 5px;
+            padding-right: 5px;
+            width: 5px;
+            font-weight: bold;
+            color: #666666;
+            display: inline;
+        }
+
+        .panel-body a {
+            target-name: new;
+            target-new: tab;
+        }
+
+        .panel-body pre {
+            display: inline;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body style="overflow-y:hidden">
+    <div style="padding-bottom:4px;background-color:#f8f8f8"><!--class="ms-crm-TopBarContainerGlobal"-->
+        <div style="display:inline">
+            <ul class="ms-crm-CommandBar-Menu">
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <span class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <a id="lnkNewComment" class="ms-crm-Menu-Label" onclick="NewComments();" style="text-decoration: none;">
+                            <img class="ms-crm-ImageStrip-NewRecord_16 ms-crm-commandbar-image16by16" style="vertical-align: top;" alt="New" src="/_imgs/imagestrips/transparent_spacer.gif">
+                            <span class="ms-crm-CommandBar-Menu" style="max-width: 150px;"> NEW </span>
+                        </a>
+                    </span>
+                </li>
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <div class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <input title="Ascending Order" name="orderby_method" onclick="Sort();" type="radio" value="false" />
+                        <span class="ms-crm-CommandBar-Menu" style="max-width: 150px;vertical-align:baseline;"> ASC </span>
+                    </div>
+                </li>
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <div class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <input title="Descending Order" name="orderby_method" onclick="Sort();" checked="checked" type="radio" value="true" />
+                        <span class="ms-crm-CommandBar-Menu" style="max-width: 150px;vertical-align:baseline;"> DESC </span>
+                    </div>
+                </li>
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <span class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <a class="ms-crm-Menu-Label" onclick="CollapseAll();" style="text-decoration: none;">
+                            <img id="imgCollapseAll" class="ms-crm-commandbar-image16by16" style="vertical-align: top;" alt="Collapse All" src="../Images/Collapse16.png">
+                            <span id="spnCollapseAll" class="ms-crm-CommandBar-Menu" style="max-width: 150px;"> COLLAPSE ALL </span>
+                        </a>
+                    </span>
+                </li>
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <span class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <select id="ddlCommentType" onchange="CommentTypeFilterOnChange();">
+                            <option selected="selected" value="0">All Comments</option>
+                            <option value="855480000">Public</option>
+                            <option value="855480001">Private</option>
+                        </select>
+                    </span>
+                </li>
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <span class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <a class="ms-crm-Menu-Label" id="ancPopup" title="Pop-Out Comments Window" style="text-decoration: none;"
+                           onclick="javascript: var winRef = window.open('', 'CommnetsPopup'); if (winRef != null) winRef.close(); winRef = window.open(window.location.search, 'CommnetsPopup');">
+                            <img class="ms-crm-commandbar-image16by16" style="vertical-align: top;" alt="Pop out" src="../Images/Popout.png">
+                            <span id="spnCollapseAll" class="ms-crm-CommandBar-Menu" style="max-width: 150px;"> POP OUT </span>
+                        </a>
+                    </span>
+                </li>
+                <li class="ms-crm-CommandBarItem ms-crm-CommandBar-Menu ms-crm-CommandBar-Button" style="display: inline-block;">
+                    <span class="ms-crm-CommandBar-Button ms-crm-Menu-Label" style="max-width: 200px;">
+                        <a class="ms-crm-Menu-Label" id="ancReload" title="Refresh Comments Window" style="text-decoration: none;"
+                           onclick="javascript: RetrieveComments();">
+                            <img class="ms-crm-commandbar-image16by16" style="vertical-align: top;" alt="Pop out" src="../Images/Refresh16.png">
+                            <!--<span id="spnCollapseAll" class="ms-crm-CommandBar-Menu" style="max-width: 150px;"> Refresh </span>-->
+                        </a>
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="commentsGrid" style="overflow:auto"></div>
+</body>
+</html>

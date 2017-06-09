@@ -1,0 +1,14 @@
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\KLITools.XRM.Comments.Plugins.dll
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\KLITools.XRM.Comments.Plugins.pdb
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\Microsoft.Crm.Sdk.Proxy.dll
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\Microsoft.Xrm.Sdk.dll
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\Microsoft.Crm.Sdk.Proxy.xml
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\Microsoft.Xrm.Sdk.xml
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\obj\Debug\KLITools.XRM.Comments.Plugins.dll
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\obj\Debug\KLITools.XRM.Comments.Plugins.pdb
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\obj\Debug\KLITools.XRM.Comments.Plugins.csprojResolveAssemblyReference.cache
+C:\Users\pot70073\Documents\Visual Studio 2015\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\KLITools.XRM.Comments.Plugins.dll
+C:\Users\pot70073\Documents\Visual Studio 2015\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\bin\Debug\KLITools.XRM.Comments.Plugins.pdb
+C:\Users\pot70073\Documents\Visual Studio 2015\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\obj\Debug\KLITools.XRM.Comments.Plugins.csprojResolveAssemblyReference.cache
+C:\Users\pot70073\Documents\Visual Studio 2015\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\obj\Debug\KLITools.XRM.Comments.Plugins.dll
+C:\Users\pot70073\Documents\Visual Studio 2015\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.Comments.Plugins\obj\Debug\KLITools.XRM.Comments.Plugins.pdb

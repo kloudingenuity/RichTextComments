@@ -1,0 +1,5 @@
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.WebResources\bin\Debug\KLITools.XRM.WebResources.dll
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.WebResources\bin\Debug\KLITools.XRM.WebResources.pdb
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.WebResources\obj\Debug\KLITools.XRM.WebResources.csprojResolveAssemblyReference.cache
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.WebResources\obj\Debug\KLITools.XRM.WebResources.dll
+C:\Users\27680\Documents\Visual Studio 2013\Projects\CodePlex\CRMComments\Src\Main\KLITools.XRM.Comments\KLITools.XRM.WebResources\obj\Debug\KLITools.XRM.WebResources.pdb
